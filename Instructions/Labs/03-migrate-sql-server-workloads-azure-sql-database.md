@@ -36,19 +36,19 @@ Nous allons restaurer la base de données *AdventureWorksLT* sur l’instance SQ
 
 1. Sélectionnez le dossier **Bases de données**, puis **Nouvelle requête**.
 
-1. Dans la fenêtre de la nouvelle requête, copiez et collez le code T-SQL ci-dessous. Exécutez la requête pour restaurer la base de données.
+1. Dans la fenêtre de la nouvelle requête, copiez et collez le code T-SQL ci-dessous. Assurez-vous que le nom et le chemin d’accès du fichier de sauvegarde de la base de données correspondent à votre fichier de sauvegarde actuel. Dans le cas contraire, la commande échouera. Exécutez la requête pour restaurer la base de données.
 
     ```sql
     RESTORE DATABASE AdventureWorksLT
-    FROM DISK = 'C:\LabFiles\AdventureWorksLT2019.bak'
+    FROM DISK = 'C:\<FolderName>\AdventureWorksLT2019.bak'
     WITH RECOVERY,
           MOVE 'AdventureWorksLT2019_Data' 
-            TO 'C:\LabFiles\AdventureWorksLT2019.mdf',
+            TO 'C:\<FolderName>\AdventureWorksLT2019.mdf',
           MOVE 'AdventureWorksLT2019_Log'
-            TO 'C:\LabFiles\AdventureWorksLT2019.ldf';
+            TO 'C:\<FolderName>\AdventureWorksLT2019.ldf';
     ```
 
-    > **Remarque** : vérifiez que le nom et le chemin d'accès du fichier de sauvegarde de la base de données dans l’exemple ci-dessus correspondent à votre fichier de sauvegarde réel. Si ce n’est pas le cas, la commande peut échouer.
+    > **Remarque** : Assurez-vous d’avoir le fichier de sauvegarde [AdventureWorks](https://learn.microsoft.com/sql/samples/adventureworks-install-configure#download-backup-files) léger sur la machine SQL Server avant d’exécuter la commande T-SQL.
 
 1. Un message de réussite doit s’afficher une fois la restauration terminée.
 
@@ -224,7 +224,7 @@ Nous sommes maintenant prêts à migrer les données. Pour effectuer une migrati
 
 Vous avez appris à installer l’extension de migration et à générer le schéma de la base de données à l’aide de l’Assistant Migration de données. Vous avez également appris à migrer une base de données SQL Server vers Azure SQL Database en utilisant l’extension de migration Azure pour Azure Data Studio. Une fois la migration terminée, vous pouvez commencer à utiliser votre nouvelle ressource Azure SQL Database. 
 
-## Nettoyer
+## Nettoyage
 
 Lorsque vous travaillez dans votre propre abonnement, il est recommandé, à la fin de chaque projet, de déterminer si vous avez toujours besoin des ressources que vous avez créées. 
 
