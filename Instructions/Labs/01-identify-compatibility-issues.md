@@ -15,7 +15,7 @@ Cet exercice prend environ **15** minutes.
 
 Avant de commencer cet exercice, vérifiez que vous remplissez les prérequis suivants :
 
-- Vous aurez besoin de SQL Server 2019 ou d’une version ultérieure, ainsi que la base de données légère [**AdventureWorksLT**](https://learn.microsoft.com/en-us/sql/samples/adventureworks-install-configure?view=sql-server-ver16&tabs=ssms) compatible avec votre instance SQL Server spécifique.
+- Vous aurez besoin de SQL Server 2019 ou d’une version ultérieure, ainsi que la base de données légère [**AdventureWorksLT**](https://learn.microsoft.com/sql/samples/adventureworks-install-configure#download-backup-files) compatible avec votre instance SQL Server spécifique.
 - Téléchargez et installez [Azure Data Studio](https://learn.microsoft.com/sql/azure-data-studio/download-azure-data-studio). Si l'application est déjà installée, mettez-la à jour pour vous assurer que vous utilisez la version la plus récente.
 - Un utilisateur SQL disposant d’un accès en lecture à la base de données source.
 
@@ -27,19 +27,19 @@ Avant de commencer cet exercice, vérifiez que vous remplissez les prérequis su
 
 1. Sélectionnez le dossier **Bases de données**, puis **Nouvelle requête**.
 
-1. Dans la fenêtre de la nouvelle requête, copiez et collez le code T-SQL ci-dessous. Exécutez la requête pour restaurer la base de données.
+1. Dans la fenêtre de la nouvelle requête, copiez et collez le code T-SQL ci-dessous. Vérifiez que le nom et le chemin d’accès du fichier de sauvegarde de la base de données correspondent à votre fichier de sauvegarde actuel. Dans le cas contraire, la commande échouera. Exécutez la requête pour restaurer la base de données.
 
     ```sql
     RESTORE DATABASE AdventureWorksLT
-    FROM DISK = 'C:\LabFiles\AdventureWorksLT2019.bak'
+    FROM DISK = 'C:\<FolderName>\AdventureWorksLT2019.bak'
     WITH RECOVERY,
           MOVE 'AdventureWorksLT2019_Data' 
-            TO 'C:\LabFiles\AdventureWorksLT2019.mdf',
+            TO 'C:\<FolderName>\AdventureWorksLT2019.mdf',
           MOVE 'AdventureWorksLT2019_Log'
-            TO 'C:\LabFiles\AdventureWorksLT2019.ldf';
+            TO 'C:\<FolderName>\AdventureWorksLT2019.ldf';
     ```
 
-    > **Remarque** : vérifiez que le nom et le chemin d'accès du fichier de sauvegarde de la base de données dans l’exemple ci-dessus correspondent à votre fichier de sauvegarde réel. Si ce n’est pas le cas, la commande peut échouer.
+    > **Remarque** : Veillez à avoir le fichier de sauvegarde [AdventureWorks](https://learn.microsoft.com/sql/samples/adventureworks-install-configure#download-backup-files) léger sur la machine SQL Server avant d’exécuter la commande T-SQL.
 
 1. Un message de réussite doit s’afficher une fois la restauration terminée.
 
