@@ -79,21 +79,19 @@ Vous allez exécuter l’extension de migration Azure pour Azure Data Studio, ex
 
 1. Dans **Étape 1 : Bases de données pour l’évaluation**, sélectionnez la base de données *AdventureWorks*, puis sélectionnez **Suivant**.
 
-1. Dans **Étape 2 : Résultats de l’évaluation et recommandations**, attendez la fin du processus d’évaluation.
+1. À l’**Étape 2 : Résultats de l’évaluation et recommandations de SKU**, attendez la fin du processus d’évaluation, puis sélectionnez **Suivant**.
 
 ## Examiner les résultats d’évaluation
 
 Vous pouvez maintenant évaluer les suggestions générées par l’extension de migration.
 
-1. Dans **Étape 2 : résultats de l’évaluation et recommandations**, sélectionnez **Azure SQL Database** comme plateforme cible.
-
-1. En bas de la page, sélectionnez **Afficher/Sélectionner** pour voir les résultats de l’évaluation. 
+1. À l’**Étape 3 : Résultats de l’évaluation et de la plateforme cible**, sélectionnez **Azure SQL Database** comme plateforme cible.
 
 1. Sélectionnez la base de données *AdventureWorks*. Prenez un moment pour examiner les résultats de l’évaluation affichés à droite.
     
     > **Remarque :** nous voyons que la colonne `Next` qui a été ajoutée précédemment a été marquée d’un indicateur, car elle peut provoquer une erreur dans Azure SQL Database.
 
-1. Sélectionnez **Annuler** et choisissez **Azure SQL Managed Instance** à la place comme plateforme cible **Azure SQL**.
+1. Choisissez **Azure SQL Managed Instance** à la place comme plateforme cible **Azure SQL Database**.
     
     > **Remarque :** la colonne `Next` n’est plus marquée pour Azure SQL Managed Instance. Pourquoi ? 
     >
@@ -111,12 +109,12 @@ Vous pouvez maintenant évaluer les suggestions générées par l’extension de
     ALTER TABLE [SalesLT].[Customer] DROP COLUMN [Next];
     ```
 
-1. Revenez à la page **Étape 2 : résultats de l’évaluation et recommandations** dans l’Assistant, puis sélectionnez **Actualiser l’évaluation**.
+1. Revenez à la page **Étape 2 : Résultats de l’évaluation et recommandations de SKU** dans l’Assistant, puis sélectionnez **Actualiser l’évaluation**.
 
-1. Sélectionnez **Azure SQL Database** comme plateforme cible **Azure SQL**.
+1. Sélectionnez **Azure SQL Database** comme plateforme cible.
 
-1. Sélectionnez **Afficher/Sélectionner** pour afficher les résultats de l’évaluation.
+1. Sélectionnez la base de données *AdventureWorks*.
 
-    > **Remarque :** le problème n’est plus marqué.
+    > **Remarque :** La base de données est prête pour la migration.
 
 Vous avez appris à évaluer la préparation d’une base de données SQL Server en vue de sa migration vers Azure SQL Database. En traitant les problèmes de compatibilité et en apportant des modifications de schéma essentielles, ou en les signalant, vous avez franchi une étape importante pour atténuer les problèmes techniques potentiels qui pourraient survenir à l’avenir sur Azure SQL Database.
