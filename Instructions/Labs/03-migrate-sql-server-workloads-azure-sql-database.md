@@ -36,7 +36,7 @@ Nous allons restaurer la base de données *AdventureWorksLT* sur l’instance SQ
 
 1. Sélectionnez le dossier **Bases de données**, puis **Nouvelle requête**.
 
-1. Dans la fenêtre de la nouvelle requête, copiez et collez le code T-SQL ci-dessous. Assurez-vous que le nom et le chemin d’accès du fichier de sauvegarde de la base de données correspondent à votre fichier de sauvegarde actuel. Dans le cas contraire, la commande échouera. Exécutez la requête pour restaurer la base de données.
+1. Dans la fenêtre de la nouvelle requête, copiez et collez le code T-SQL ci-dessous. Vérifiez que le nom et le chemin d’accès du fichier de sauvegarde de la base de données correspondent à votre fichier de sauvegarde actuel. Dans le cas contraire, la commande échouera. Exécutez la requête pour restaurer la base de données.
 
     ```sql
     RESTORE DATABASE AdventureWorksLT
@@ -48,7 +48,7 @@ Nous allons restaurer la base de données *AdventureWorksLT* sur l’instance SQ
             TO 'C:\<FolderName>\AdventureWorksLT2019.ldf';
     ```
 
-    > **Remarque** : Assurez-vous d’avoir le fichier de sauvegarde [AdventureWorks](https://learn.microsoft.com/sql/samples/adventureworks-install-configure#download-backup-files) léger sur la machine SQL Server avant d’exécuter la commande T-SQL.
+    > **Remarque** : Veillez à avoir le fichier de sauvegarde [AdventureWorks](https://learn.microsoft.com/sql/samples/adventureworks-install-configure#download-backup-files) léger sur la machine SQL Server avant d’exécuter la commande T-SQL.
 
 1. Un message de réussite doit s’afficher une fois la restauration terminée.
 
@@ -150,36 +150,6 @@ Pour installer l’extension de migration, suivez les étapes suivantes. Si l’
 
     > **Remarque** : si **Migration Azure SQL** n’est pas visible dans la barre latérale du tableau de bord du serveur, rouvrez Azure Data Studio.
  
-## Générer le schéma de base de données avec DMA
-
-Avant de commencer la migration, nous devons nous assurer que le schéma existe sur la base de données cible. Nous allons utiliser DMA pour créer le schéma à partir de la source et l’appliquer à la cible.
-
-1. Lancez l’Assistant Migration de données.
-
-1. Créez un projet de migration et définissez le type source sur **SQL Server**, le type de serveur cible sur **Azure SQL Database** et l’étendue de la migration sur **Schéma uniquement**. Sélectionnez **Créer**.
-
-    ![Capture d’écran montrant comment lancer un nouveau projet de migration dans l’Assistant Migration de données.](../media/3-data-migration-schema.png) 
-
-1. Sous l’onglet **Sélectionner une source**, entrez le nom de l’instance SQL Server source, puis sélectionnez **Authentification Windows** comme **Type d’authentification**. Décochez la case **Chiffrer la connexion**. 
-
-1. Sélectionnez **Se connecter**.
-
-1. Sélectionnez la base de données **AdventureWorksLT**, puis cliquez sur **Suivant**.
-
-1. Sous l’onglet **Sélectionner une cible**, entrez le nom du serveur Azure SQL cible, sélectionnez **Authentification SQL Server** comme **Type d’authentification** et fournissez les informations d’identification de l’utilisateur SQL. 
-
-1. Sélectionnez la base de données **AdventureWorksLT**, puis cliquez sur **Suivant**.
-
-1. Sous l’onglet **Sélectionner des objets** , sélectionnez tous les objets de schéma de la base de données source. Sélectionnez **Générer un script SQL**. 
-
-    ![Capture d’écran montrant l’onglet Sélectionner des objets dans l’Assistant Migration de données.](../media/3-data-migration-generate.png)
-
-1. Une fois le schéma généré, prenez un certain temps pour le passer en revue. En règle générale, cette étape consiste à apporter des modifications au script pour les objets qui ne peuvent pas être créés dans leur état actuel à l’emplacement cible, ce qui n’est pas le cas dans ce scénario.
- 
-1. Vous pouvez exécuter le script manuellement à l’aide d’Azure Data Studio, de SQL Management Studio ou en sélectionnant **Déployer le schéma**. Choisissez l’une des méthodes.
-
-    ![Capture d’écran montrant le script généré dans l’Assistant Migration de données.](../media/3-data-migration-script.png)
-
 ## Effectuer une migration hors connexion d’une base de données SQL Server vers Azure SQL Database
 
 Nous sommes maintenant prêts à migrer les données. Pour effectuer une migration hors connexion en utilisant Azure Data Studio, suivez les étapes ci-dessous.
@@ -188,21 +158,23 @@ Nous sommes maintenant prêts à migrer les données. Pour effectuer une migrati
 
 1. Dans **Étape 1 : Bases de données pour l’évaluation**, sélectionnez la base de données *AdventureWorks*, puis sélectionnez **Suivant**.
 
-1. Dans **Étape 2 : résultats de l’évaluation et recommandations**, une fois l’évaluation terminée, sélectionnez **Azure SQL Database** comme cible **Azure SQL**.
+1. À l’**Étape 2 : Résumé de l’évaluation et recommandations SKU**, attendez la fin de l’évaluation, puis passez en revue les résultats. Cliquez sur **Suivant**.
 
-1. En bas de la page **Étape 2 : résultats et recommandations de l’évaluation**, sélectionnez **Afficher/Sélectionner** pour afficher les résultats de l’évaluation. Sélectionnez la base de données à migrer.
+1. À l’**Étape 3 : Plateforme cible et résultats de l’évaluation**, sélectionnez la base de données appropriée pour voir les résultats de l’évaluation.
 
     > **Remarque** : prenez un moment pour examiner les résultats de l’évaluation affichés à droite.
 
-1. À l’**Étape 3 : cible Azure SQL**, si le compte n’est pas encore lié, veillez à ajouter un compte en cliquant sur le lien **Lier le compte**. Sélectionnez ensuite un compte Azure, un locataire AD, un abonnement, un emplacement, un groupe de ressources, un serveur Azure SQL Database et des informations d’identification pour Azure SQL Database.
+1. En haut de la page **Étape 3 : Plateforme cible et résultats de l’évaluation**, sélectionnez **Azure SQL Database** en tant que cible **Azure SQL**.
+
+1. À l’**Étape 4 : Cible Azure SQL**, si le compte n’est pas encore lié, veillez à ajouter un compte en sélectionnant le lien **Lier un compte**. Sélectionnez ensuite un compte Azure, un locataire AD, un abonnement, un emplacement, un groupe de ressources, un serveur Azure SQL Database et des informations d’identification pour Azure SQL Database.
 
 1. Cliquez sur **Se connecter**, puis sélectionnez la base de données *AdventureWorks* comme **Base de données cible**. Cliquez sur **Suivant**.
 
-1. À l’**Étape 4 : Azure Database Migration Service**, sélectionnez le lien **Créer nouveau** pour créer un service Azure Database Migration Service à l’aide de l’Assistant. Suivez les étapes fournies par l’Assistant pour configurer un nouveau runtime d’intégration auto-hébergé. Si vous en avez créé un précédemment, réutilisez-le.
+1. À l’**Étape 5 : Azure Database Migration Service**, sélectionnez le lien **Créer** pour créer une instance d’Azure Database Migration Service à l’aide de l’Assistant. Suivez les étapes fournies par l’Assistant pour configurer un nouveau runtime d’intégration auto-hébergé. Si vous en avez créé un précédemment, réutilisez-le.
 
-1. À l’**Étape 5 : configuration de la source de données**, entrez les informations d’identification pour vous connecter à l’instance SQL Server à partir du runtime d’intégration auto-hébergé. 
+1. À l’**Étape 6 : Configuration de la source de données**, entrez les informations d’identification appropriées pour vous connecter à l’instance SQL Server à partir du runtime d’intégration auto-hébergé. 
 
-1. Sélectionnez toutes les tables à migrer de la source vers la cible. 
+1. Sélectionnez toutes les tables à migrer de la source vers la cible, puis cochez l’option **Migrer le schéma manquant**.
 
 1. Sélectionnez **Exécuter la validation**.
 
@@ -210,7 +182,7 @@ Nous sommes maintenant prêts à migrer les données. Pour effectuer une migrati
 
 1. Quand la validation est terminée, sélectionnez **Suivant**.
 
-1. À l’**Étape 6 : résumé**, sélectionnez **Démarrer la migration**.
+1. À l’**Étape 7 : Résumé**, sélectionnez **Démarrer la migration**.
 
 1. Sélectionnez **Migrations de bases de données en cours** dans le tableau de bord de la migration pour afficher l’état des migrations. 
 
