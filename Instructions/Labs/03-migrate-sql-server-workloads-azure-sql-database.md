@@ -22,7 +22,6 @@ Voici les éléments nécessaires pour effectuer cet exercice :
 | **Serveur source** | Instance de SQL Server 2019 ou une [version plus récente](https://www.microsoft.com/en-us/sql-server/sql-server-downloads) installée sur le serveur de votre choix. |
 | **Base de données source** | La base de données légère [AdventureWorks](https://learn.microsoft.com/sql/samples/adventureworks-install-configure) à restaurer sur l’instance SQL Server. |
 | **Azure Data Studio** | Installez [Azure Data Studio](https://learn.microsoft.com/sql/azure-data-studio/download-azure-data-studio) sur le même serveur que celui où se trouve la base de données source. Si l'application est déjà installée, mettez-la à jour pour vous assurer que vous utilisez la version la plus récente. |
-| **Assistant Migration de données Microsoft** | Installez l’[Assistant Migration de données](https://www.microsoft.com/en-us/download/details.aspx?id=53595) sur le même serveur que celui où se trouve la base de données source. |
 | Fournisseur de ressources **Microsoft.DataMigration** | Assurez-vous que l’abonnement vous autorise à utiliser l’espace de noms **Microsoft.DataMigration**. Pour découvrir comment effectuer l’inscription d’un fournisseur de ressources, consultez [Inscrire le fournisseur de ressources](https://learn.microsoft.com/azure/dms/quickstart-create-data-migration-service-portal#register-the-resource-provider). |
 | **Microsoft Integration Runtime** | Installez [Microsoft Integration Runtime](https://aka.ms/sql-migration-shir-download). |
 
@@ -92,11 +91,7 @@ Nous allons configurer une base de données Azure SQL qui servira d’environne
 
 1. Dans **Calcul + stockage**, sélectionnez **Configurer la base de données**. Dans la page **Configurer**, pour la liste déroulante **Niveau de service**, sélectionnez **De base**, puis **Appliquer**.
 
-1. Pour l’option **Redondance du stockage de sauvegarde**, conservez la valeur par défaut : **stockage de sauvegarde géoredondant**. Sélectionnez **Suivant : Réseau**.
-
-1. Sous l’onglet **Mise en réseau**, sélectionnez **Suivant : sécurité**, puis **Suivant : paramètres supplémentaires**.
-
-1. Sur la page **Paramètres supplémentaires**, sélectionnez **Examiner et créer**.
+1. Pour l’option **Redondance du stockage de sauvegarde**, conservez la valeur par défaut : **stockage de sauvegarde géoredondant**. Sélectionnez **Vérifier + créer**.
 
 1. Passez en revue les paramètres, puis sélectionnez **Créer**.
 
@@ -156,31 +151,31 @@ Nous sommes maintenant prêts à migrer les données. Pour effectuer une migrati
 
 1. Lancez l’Assistant **Migration vers Azure SQL** de l’extension dans Azure Data Studio, puis sélectionnez **Migrer vers Azure SQL**.
 
-1. Dans **Étape 1 : Bases de données pour l’évaluation**, sélectionnez la base de données *AdventureWorks*, puis sélectionnez **Suivant**.
+1. À l’**Étape 1 : Bases de données pour l’évaluation**, sélectionnez la base de données *AdventureWorksLT*, puis sélectionnez **Suivant**.
 
 1. À l’**Étape 2 : Résumé de l’évaluation et recommandations SKU**, attendez la fin de l’évaluation, puis passez en revue les résultats. Cliquez sur **Suivant**.
 
-1. À l’**Étape 3 : Plateforme cible et résultats de l’évaluation**, sélectionnez la base de données appropriée pour voir les résultats de l’évaluation.
+1. À l’**Étape 3 : Résultats de l’évaluation et de la plateforme cible**, sélectionnez **Azure SQL Database** comme type de cible. Après avoir passé en revue les résultats de l’évaluation, sélectionnez **Suivant**.
 
-    > **Remarque** : prenez un moment pour examiner les résultats de l’évaluation affichés à droite.
+1. À l’**Étape 4 : Cible Azure SQL**, si le compte n’est pas encore lié, veillez à ajouter un compte en sélectionnant le lien **Lier un compte**. Sélectionnez ensuite un compte Azure, un locataire Microsoft Entra, un abonnement, un emplacement, un groupe de ressources, un serveur Azure SQL Database et les informations d’identification d’Azure SQL Database.
 
-1. En haut de la page **Étape 3 : Plateforme cible et résultats de l’évaluation**, sélectionnez **Azure SQL Database** en tant que cible **Azure SQL**.
-
-1. À l’**Étape 4 : Cible Azure SQL**, si le compte n’est pas encore lié, veillez à ajouter un compte en sélectionnant le lien **Lier un compte**. Sélectionnez ensuite un compte Azure, un locataire AD, un abonnement, un emplacement, un groupe de ressources, un serveur Azure SQL Database et des informations d’identification pour Azure SQL Database.
-
-1. Cliquez sur **Se connecter**, puis sélectionnez la base de données *AdventureWorks* comme **Base de données cible**. Cliquez sur **Suivant**.
+1. Sélectionnez **Connecter**, puis sélectionnez la base de données *AdventureWorksLT* comme **Base de données cible**. Cliquez sur **Suivant**.
 
 1. À l’**Étape 5 : Azure Database Migration Service**, sélectionnez le lien **Créer** pour créer une instance d’Azure Database Migration Service à l’aide de l’Assistant. Suivez les étapes fournies par l’Assistant pour configurer un nouveau runtime d’intégration auto-hébergé. Si vous en avez créé un précédemment, réutilisez-le.
 
-1. À l’**Étape 6 : Configuration de la source de données**, entrez les informations d’identification appropriées pour vous connecter à l’instance SQL Server à partir du runtime d’intégration auto-hébergé. 
+1. À l’**Étape 6 : Configuration de la source de données**, entrez les informations d’identification appropriées pour vous connecter à l’instance SQL Server à partir du runtime d’intégration auto-hébergé.
 
-1. Sélectionnez toutes les tables à migrer de la source vers la cible, puis cochez l’option **Migrer le schéma manquant**.
+1. Sélectionnez **Modifier** pour la base de données *AdventureWorksLT*. 
+
+1. Cochez l’option **Migrer le schéma vers la cible**, puis vérifiez que toutes les tables figurant sous l’onglet **Manquant sur la cible** sont sélectionnées. Sélectionnez **Mettre à jour**.
 
 1. Sélectionnez **Exécuter la validation**.
 
     ![Capture d’écran de l’étape d’exécution de la validation dans l’extension de migration Azure pour Azure Data Studio.](../media/3-run-validation.png) 
 
-1. Quand la validation est terminée, sélectionnez **Suivant**.
+1. Une fois la validation terminée, sélectionnez **Terminé**.
+
+1. Cliquez sur **Suivant**.
 
 1. À l’**Étape 7 : Résumé**, sélectionnez **Démarrer la migration**.
 
