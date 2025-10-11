@@ -5,7 +5,9 @@ lab:
 
 # Migrer des bases de données SQL Server vers Azure SQL Database
 
-Dans cet exercice, vous allez apprendre à migrer une base de données SQL Server vers Azure SQL Database en utilisant l’extension de migration Azure pour Azure Data Studio. Vous allez commencer par installer et lancer l’extension de migration Azure pour Azure Data Studio. Vous allez ensuite procéder à la migration hors connexion d’une base de données SQL Server vers Azure SQL Database. Vous apprendrez également à surveiller le processus de migration sur le portail Azure.
+Dans cet exercice, vous apprendrez à migrer des tables spécifiques d'une base de données SQL Server vers Azure SQL Database à l'aide de l'extension de migration Azure pour Azure Data Studio. 
+
+> **Important** : Afin de ne pas affecter la durée de la migration, qui peut être influencée par les contraintes liées au réseau et à la connectivité, nous ne migrerons que quelques tables (*Client*, *ProductCategory*, *Produit*, et *Adresse*) à titre d'exemple. Le même processus peut être utilisé pour migrer l’intégralité du schéma si nécessaire.
 
 Cet exercice prend environ **45** minutes.
 
@@ -144,14 +146,214 @@ Pour installer l’extension de migration, suivez les étapes suivantes. Si l’
 1. Pour lancer l’extension de migration Azure, cliquez avec le bouton droit sur le nom de l’instance SQL Server, puis sélectionnez **Gérer** pour accéder au tableau de bord et à la page d’arrivée de l’extension de migration Azure SQL.
 
     > **Remarque** : si **Migration Azure SQL** n’est pas visible dans la barre latérale du tableau de bord du serveur, rouvrez Azure Data Studio.
- 
+
+## Créer le schéma cible
+
+Nous allons créer manuellement le schéma pour les tables cibles avant de commencer la migration des données. 
+
+1. Dans Azure Data Studio, connectez-vous à votre base de données Azure SQL.
+
+1. Cliquez avec le bouton droit sur la base de données *AdventureWorksLT*, puis sélectionnez **Nouvelle requête**.
+
+1. Copiez et collez le script T-SQL suivant pour créer le schéma des tables que nous allons migrer :
+
+    ```sql
+        CREATE SCHEMA [SalesLT]
+        GO
+        
+        CREATE TYPE [dbo].[Name] FROM [nvarchar](50) NULL
+        GO
+        
+        CREATE TYPE [dbo].[NameStyle] FROM [bit] NOT NULL
+        GO
+        
+        CREATE TYPE [dbo].[Phone] FROM [nvarchar](25) NULL
+        GO
+        
+        CREATE TABLE [SalesLT].[Address](
+            [AddressID] [int] IDENTITY(1,1) NOT FOR REPLICATION NOT NULL,
+            [AddressLine1] [nvarchar](60) NOT NULL,
+            [AddressLine2] [nvarchar](60) NULL,
+            [City] [nvarchar](30) NOT NULL,
+            [StateProvince] [dbo].[Name] NOT NULL,
+            [CountryRegion] [dbo].[Name] NOT NULL,
+            [PostalCode] [nvarchar](15) NOT NULL,
+            [rowguid] [uniqueidentifier] ROWGUIDCOL  NOT NULL,
+            [ModifiedDate] [datetime] NOT NULL,
+         CONSTRAINT [PK_Address_AddressID] PRIMARY KEY CLUSTERED 
+        (
+            [AddressID] ASC
+        )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+         CONSTRAINT [AK_Address_rowguid] UNIQUE NONCLUSTERED 
+        (
+            [rowguid] ASC
+        )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+        ) ON [PRIMARY]
+        GO
+        
+        CREATE TABLE [SalesLT].[Customer](
+            [CustomerID] [int] IDENTITY(1,1) NOT FOR REPLICATION NOT NULL,
+            [NameStyle] [dbo].[NameStyle] NOT NULL,
+            [Title] [nvarchar](8) NULL,
+            [FirstName] [dbo].[Name] NOT NULL,
+            [MiddleName] [dbo].[Name] NULL,
+            [LastName] [dbo].[Name] NOT NULL,
+            [Suffix] [nvarchar](10) NULL,
+            [CompanyName] [nvarchar](128) NULL,
+            [SalesPerson] [nvarchar](256) NULL,
+            [EmailAddress] [nvarchar](50) NULL,
+            [Phone] [dbo].[Phone] NULL,
+            [PasswordHash] [varchar](128) NOT NULL,
+            [PasswordSalt] [varchar](10) NOT NULL,
+            [rowguid] [uniqueidentifier] ROWGUIDCOL  NOT NULL,
+            [ModifiedDate] [datetime] NOT NULL,
+         CONSTRAINT [PK_Customer_CustomerID] PRIMARY KEY CLUSTERED 
+        (
+            [CustomerID] ASC
+        )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+         CONSTRAINT [AK_Customer_rowguid] UNIQUE NONCLUSTERED 
+        (
+            [rowguid] ASC
+        )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+        ) ON [PRIMARY]
+        GO
+        
+        CREATE TABLE [SalesLT].[Product](
+            [ProductID] [int] IDENTITY(1,1) NOT NULL,
+            [Name] [dbo].[Name] NOT NULL,
+            [ProductNumber] [nvarchar](25) NOT NULL,
+            [Color] [nvarchar](15) NULL,
+            [StandardCost] [money] NOT NULL,
+            [ListPrice] [money] NOT NULL,
+            [Size] [nvarchar](5) NULL,
+            [Weight] [decimal](8, 2) NULL,
+            [ProductCategoryID] [int] NULL,
+            [ProductModelID] [int] NULL,
+            [SellStartDate] [datetime] NOT NULL,
+            [SellEndDate] [datetime] NULL,
+            [DiscontinuedDate] [datetime] NULL,
+            [ThumbNailPhoto] [varbinary](max) NULL,
+            [ThumbnailPhotoFileName] [nvarchar](50) NULL,
+            [rowguid] [uniqueidentifier] ROWGUIDCOL  NOT NULL,
+            [ModifiedDate] [datetime] NOT NULL,
+         CONSTRAINT [PK_Product_ProductID] PRIMARY KEY CLUSTERED 
+        (
+            [ProductID] ASC
+        )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+         CONSTRAINT [AK_Product_Name] UNIQUE NONCLUSTERED 
+        (
+            [Name] ASC
+        )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+         CONSTRAINT [AK_Product_ProductNumber] UNIQUE NONCLUSTERED 
+        (
+            [ProductNumber] ASC
+        )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+         CONSTRAINT [AK_Product_rowguid] UNIQUE NONCLUSTERED 
+        (
+            [rowguid] ASC
+        )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+        ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+        GO
+        
+        CREATE TABLE [SalesLT].[ProductCategory](
+            [ProductCategoryID] [int] IDENTITY(1,1) NOT NULL,
+            [ParentProductCategoryID] [int] NULL,
+            [Name] [dbo].[Name] NOT NULL,
+            [rowguid] [uniqueidentifier] ROWGUIDCOL  NOT NULL,
+            [ModifiedDate] [datetime] NOT NULL,
+         CONSTRAINT [PK_ProductCategory_ProductCategoryID] PRIMARY KEY CLUSTERED 
+        (
+            [ProductCategoryID] ASC
+        )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+         CONSTRAINT [AK_ProductCategory_Name] UNIQUE NONCLUSTERED 
+        (
+            [Name] ASC
+        )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+         CONSTRAINT [AK_ProductCategory_rowguid] UNIQUE NONCLUSTERED 
+        (
+            [rowguid] ASC
+        )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+        ) ON [PRIMARY]
+        GO
+        
+        ALTER TABLE [SalesLT].[Address] ADD  CONSTRAINT [DF_Address_rowguid]  DEFAULT (newid()) FOR [rowguid]
+        GO
+        
+        ALTER TABLE [SalesLT].[Address] ADD  CONSTRAINT [DF_Address_ModifiedDate]  DEFAULT (getdate()) FOR [ModifiedDate]
+        GO
+        
+        ALTER TABLE [SalesLT].[Customer] ADD  CONSTRAINT [DF_Customer_NameStyle]  DEFAULT ((0)) FOR [NameStyle]
+        GO
+        
+        ALTER TABLE [SalesLT].[Customer] ADD  CONSTRAINT [DF_Customer_rowguid]  DEFAULT (newid()) FOR [rowguid]
+        GO
+        
+        ALTER TABLE [SalesLT].[Customer] ADD  CONSTRAINT [DF_Customer_ModifiedDate]  DEFAULT (getdate()) FOR [ModifiedDate]
+        GO
+        
+        ALTER TABLE [SalesLT].[Product] ADD  CONSTRAINT [DF_Product_rowguid]  DEFAULT (newid()) FOR [rowguid]
+        GO
+        
+        ALTER TABLE [SalesLT].[Product] ADD  CONSTRAINT [DF_Product_ModifiedDate]  DEFAULT (getdate()) FOR [ModifiedDate]
+        GO
+        
+        ALTER TABLE [SalesLT].[ProductCategory] ADD  CONSTRAINT [DF_ProductCategory_rowguid]  DEFAULT (newid()) FOR [rowguid]
+        GO
+        
+        ALTER TABLE [SalesLT].[ProductCategory] ADD  CONSTRAINT [DF_ProductCategory_ModifiedDate]  DEFAULT (getdate()) FOR [ModifiedDate]
+        GO
+        
+        ALTER TABLE [SalesLT].[Product]  WITH CHECK ADD  CONSTRAINT [FK_Product_ProductCategory_ProductCategoryID] FOREIGN KEY([ProductCategoryID])
+        REFERENCES [SalesLT].[ProductCategory] ([ProductCategoryID])
+        GO
+        
+        ALTER TABLE [SalesLT].[Product] CHECK CONSTRAINT [FK_Product_ProductCategory_ProductCategoryID]
+        GO
+        
+        ALTER TABLE [SalesLT].[ProductCategory]  WITH CHECK ADD  CONSTRAINT [FK_ProductCategory_ProductCategory_ParentProductCategoryID_ProductCategoryID] FOREIGN KEY([ParentProductCategoryID])
+        REFERENCES [SalesLT].[ProductCategory] ([ProductCategoryID])
+        GO
+        
+        ALTER TABLE [SalesLT].[ProductCategory] CHECK CONSTRAINT [FK_ProductCategory_ProductCategory_ParentProductCategoryID_ProductCategoryID]
+        GO
+        
+        ALTER TABLE [SalesLT].[Product]  WITH NOCHECK ADD  CONSTRAINT [CK_Product_ListPrice] CHECK  (([ListPrice]>=(0.00)))
+        GO
+        
+        ALTER TABLE [SalesLT].[Product] CHECK CONSTRAINT [CK_Product_ListPrice]
+        GO
+        
+        ALTER TABLE [SalesLT].[Product]  WITH NOCHECK ADD  CONSTRAINT [CK_Product_SellEndDate] CHECK  (([SellEndDate]>=[SellStartDate] OR [SellEndDate] IS NULL))
+        GO
+        
+        ALTER TABLE [SalesLT].[Product] CHECK CONSTRAINT [CK_Product_SellEndDate]
+        GO
+        
+        ALTER TABLE [SalesLT].[Product]  WITH NOCHECK ADD  CONSTRAINT [CK_Product_StandardCost] CHECK  (([StandardCost]>=(0.00)))
+        GO
+        
+        ALTER TABLE [SalesLT].[Product] CHECK CONSTRAINT [CK_Product_StandardCost]
+        GO
+        
+        ALTER TABLE [SalesLT].[Product]  WITH NOCHECK ADD  CONSTRAINT [CK_Product_Weight] CHECK  (([Weight]>(0.00)))
+        GO
+        
+        ALTER TABLE [SalesLT].[Product] CHECK CONSTRAINT [CK_Product_Weight]
+        GO
+        
+    ```
+
+1. Exécutez le script en appuyant sur **F5** ou en cliquant **Exécuter**.
+
+1. Vérifiez que les tables ont été créées correctement en développant le dossier **Tables** dans l’Explorateur de bases de données.
+
 ## Effectuer une migration hors connexion d’une base de données SQL Server vers Azure SQL Database
 
 Nous sommes maintenant prêts à migrer les données. Pour effectuer une migration hors connexion en utilisant Azure Data Studio, suivez les étapes ci-dessous.
 
 1. Lancez l’Assistant **Migration vers Azure SQL** de l’extension dans Azure Data Studio, puis sélectionnez **Migrer vers Azure SQL**.
 
-1. À l’**Étape 1 : Bases de données pour l’évaluation**, sélectionnez la base de données *AdventureWorksLT*, puis sélectionnez **Suivant**.
+1. À l’**Étape 1 : Bases de données pour l'évaluation**, sélectionnez **Non** à *« Souhaitez-vous suivre le processus de migration dans le portail Azure ? »*, puis sélectionnez la base de données *AdventureWorksLT*. Cliquez sur **Suivant**.
 
 1. À l’**Étape 2 : Résumé de l’évaluation et recommandations SKU**, attendez la fin de l’évaluation, puis passez en revue les résultats. Cliquez sur **Suivant**.
 
@@ -161,21 +363,27 @@ Nous sommes maintenant prêts à migrer les données. Pour effectuer une migrati
 
 1. Sélectionnez **Connecter**, puis sélectionnez la base de données *AdventureWorksLT* comme **Base de données cible**. Cliquez sur **Suivant**.
 
-1. À l’**Étape 5 : Azure Database Migration Service**, sélectionnez le lien **Créer** pour créer une instance d’Azure Database Migration Service à l’aide de l’Assistant. Suivez les étapes fournies par l’Assistant pour configurer un nouveau runtime d’intégration auto-hébergé. Si vous en avez créé un précédemment, réutilisez-le.
+1. À l’**Étape 5 : Azure Database Migration Service**, sélectionnez le lien **Créer** pour créer une instance d’Azure Database Migration Service à l’aide de l’Assistant. Suivez les étapes de **configuration manuelle** fournies par l'assistant pour configurer le runtime d'intégration auto-hébergé. Si vous en avez créé un précédemment, réutilisez-le.
 
 1. À l’**Étape 6 : Configuration de la source de données**, entrez les informations d’identification appropriées pour vous connecter à l’instance SQL Server à partir du runtime d’intégration auto-hébergé.
 
-1. Sélectionnez **Modifier** pour la base de données *AdventureWorksLT*. 
+1. Sélectionnez **Modifier** pour la colonne *Sélectionner les tables* pour la base de données AdventureWorksLT.
 
-1. Cochez l’option **Migrer le schéma vers la cible**, puis vérifiez que toutes les tables figurant sous l’onglet **Manquant sur la cible** sont sélectionnées. Sélectionnez **Mettre à jour**.
+1. Décochez l'option **Migrer le schéma vers la cible**. (puisque nous avons déjà créé le schéma manuellement).
+
+1. Sous l’onglet **Disponible sur cible** , il existe quatre tables prêtes à migrer :
+     - **SalesLT.Customer**
+     - **SalesLT.ProductCategory** 
+     - **SalesLT.Product**
+     - **SalesLT.Address**
+
+1. Sélectionnez **Mettre à jour** pour enregistrer votre sélection de table.
 
 1. Sélectionnez **Exécuter la validation**.
 
     ![Capture d’écran de l’étape d’exécution de la validation dans l’extension de migration Azure pour Azure Data Studio.](../media/3-run-validation.png) 
 
-1. Une fois la validation terminée, sélectionnez **Terminé**.
-
-1. Cliquez sur **Suivant**.
+1. Une fois la validation terminée, sélectionnez **Terminé**, puis **Suivant**.
 
 1. À l’**Étape 7 : Résumé**, sélectionnez **Démarrer la migration**.
 
@@ -187,11 +395,24 @@ Nous sommes maintenant prêts à migrer les données. Pour effectuer une migrati
 
     ![Capture d’écran des détails de la migration dans l’extension de migration Azure pour Azure Data Studio.](../media/3-dashboard-sqldb.png)
 
-1. Lorsque l’état de la migration est **Réussie**, accédez au serveur cible et validez la base de données cible. Vérifiez le schéma de la base de données et les données migrées.
+1. Lorsque l’état de la migration est **Réussie**, accédez au serveur cible et validez la base de données cible. 
 
-Vous avez appris à installer l’extension de migration et à générer le schéma de la base de données à l’aide de l’Assistant Migration de données. Vous avez également appris à migrer une base de données SQL Server vers Azure SQL Database en utilisant l’extension de migration Azure pour Azure Data Studio. Une fois la migration terminée, vous pouvez commencer à utiliser votre nouvelle ressource Azure SQL Database. 
+1. Exécutez la requête suivante pour vérifier que la migration des données s'est déroulée correctement :
 
-## Nettoyage
+    ```sql
+    -- Check row counts for migrated data
+    SELECT 'Customer' AS TableName, COUNT(*) AS [RowCount] FROM [SalesLT].[Customer]
+    UNION ALL
+    SELECT 'ProductCategory' AS TableName, COUNT(*) AS [RowCount] FROM [SalesLT].[ProductCategory]
+    UNION ALL
+    SELECT 'Product' AS TableName, COUNT(*) AS [RowCount] FROM [SalesLT].[Product]
+    UNION ALL
+    SELECT 'Address' AS TableName, COUNT(*) AS [RowCount] FROM [SalesLT].[Address];
+    ```
+
+Vous avez également appris à effectuer une migration sélective de tables spécifiques d'une base de données SQL Server vers Azure SQL Database à l'aide de l'extension de migration Azure. Vous apprendrez également comment surveiller le processus de migration.
+
+## Nettoyer
 
 Lorsque vous travaillez dans votre propre abonnement, il est recommandé, à la fin de chaque projet, de déterminer si vous avez toujours besoin des ressources que vous avez créées. 
 
